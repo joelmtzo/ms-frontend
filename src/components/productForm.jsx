@@ -1,8 +1,8 @@
-import React, {Component} from 'react';
+import React from 'react';
 import Form from "./common/form";
 import Joi from "joi-browser";
-import {apiUrl} from "../config.json";
 import {Link} from "react-router-dom";
+import {getProduct, saveProduct} from "../services/productService";
 
 class ProductForm extends Form {
     state = {
@@ -47,14 +47,13 @@ class ProductForm extends Form {
         this.populateForm();
     }
 
-    populateForm() {
+    async populateForm() {
         try {
             const productId = this.props.match.params.id;
             if (productId === "new") return;
 
-            fetch(apiUrl + `/${productId}`)
-                .then(response => response.json())
-                .then(data => this.setState({data: this.mapToViewModel(data)}));
+            const {data: product} = await getProduct(productId);
+            this.setState({data: this.mapToViewModel(product)})
         } catch (ex) {
             if (ex.response && ex.response.status === 404)
                 console.log("Not found")
@@ -71,23 +70,10 @@ class ProductForm extends Form {
         };
     }
 
-    doSubmit = () => {
-        const productId = this.state.data.productId;
-        const options = {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(this.state.data)
-        };
+    doSubmit = async () => {
+        await saveProduct(this.state.data);
 
-        if (productId === "")
-            fetch(apiUrl, options)
-                .then(response => response.json());
-        else {
-            fetch(apiUrl + `/${productId}`, { ...options, method: 'PUT' })
-                .then(response => response.json());
-        }
-
-        this.props.history.push("/");
+        this.props.history.push("/products");
     }
 
     render() {
@@ -100,7 +86,7 @@ class ProductForm extends Form {
                     {this.renderSelect("measureUnit", "Unidad de medida", this.state.measureUnits)}
                     {this.renderInput("code", "Código")}
                     <div className="d-flex justify-content-between">
-                        <Link to={"/"} className="btn btn-primary">Cancelar</Link>
+                        <Link to={"/products"} className="btn btn-primary">Cancelar</Link>
                         <button disabled={this.validate()} className="btn btn-success">Guardar</button>
                     </div>
                 </form>

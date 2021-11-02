@@ -1,19 +1,16 @@
 import React, {Component} from 'react';
 import ProductsTable from "./productsTable";
-import {getProducts, saveProduct} from "../services/productService";
-import ProductForm from "./productForm";
+import {deleteProduct, getProducts} from "../services/productService";
 import {Link} from "react-router-dom";
-import {apiUrl} from "../config.json";
 
 class Products extends Component {
     state = {
         products: [],
     }
 
-    componentDidMount() {
-        fetch(apiUrl)
-            .then(response => response.json())
-            .then(data => this.setState({products: data}));
+    async componentDidMount() {
+        const {data: products} = await getProducts();
+        this.setState({products});
     }
 
     handleDelete = product => {
@@ -21,8 +18,7 @@ class Products extends Component {
             const products = this.state.products.filter(p => p.productId !== product.productId);
             this.setState({products});
 
-            fetch(apiUrl + `/${product.productId}`, {method: 'DELETE'})
-                .then(response => response.json())
+            deleteProduct(product.productId)
         }
     }
 
